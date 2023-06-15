@@ -3,7 +3,7 @@ close all;
 clear all;
 i=imread('i3.png');
 u=rgb2gray(i);
-y=im2bw(u,.9);
+y=imbinarize(u,.9);
 s=[true,true;false,true];
 for m=2:2:74
     for n=2:2:100
