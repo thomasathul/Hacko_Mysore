@@ -28,6 +28,7 @@ function GUI2()
 
     encryptSendBtn = uicontrol('Parent', encryptPanel, 'Style', 'pushbutton', 'String', 'Send', 'Position', [140, 30, 100, 30], 'BackgroundColor', 'white', 'Callback', @encryptSendCallback);
 
+    
     % Create the decrypt panel as a fixed screen within the main window
     decryptPanel = uipanel('Parent', mainFig, 'Title', 'Decrypt', 'Position', [0.05, 0.2, 0.9, 0.7], 'BackgroundColor', [0.8 0.9 0.8], 'Visible', 'off');
 
@@ -42,6 +43,7 @@ function GUI2()
 
     decryptSendBtn = uicontrol('Parent', decryptPanel, 'Style', 'pushbutton', 'String', 'Send', 'Position', [140, 30, 100, 30], 'BackgroundColor', 'white', 'Callback', @decryptSendCallback);
     % Callback functions
+    global fullPath1 fullPath2 fullPath3 fullPath4 fullPath5;
 
     function showEncryptPanel(~, ~)
         set(encryptPanel, 'Visible', 'on');
@@ -61,6 +63,7 @@ function GUI2()
             fullFilePath1 = fullfile(pathname, filename);
             set(encryptsourceDisplayBox, 'String', filename);
             disp(['Selected file for Image 1: ', fullFilePath1]);
+            fullPath1=fullFilePath1;
         end
     end
 
@@ -72,6 +75,7 @@ function GUI2()
             fullFilePath2 = fullfile(pathname, filename);
             set(encryptImg1DisplayBox, 'String', filename);
             disp(['Selected file for Image 1: ', fullFilePath2]);
+            fullPath2=fullFilePath2;
         end
     end
 
@@ -83,11 +87,12 @@ function GUI2()
             fullFilePath3 = fullfile(pathname, filename);
             set(encryptImg2DisplayBox, 'String', filename);
             disp(['Selected file for Image 2: ', fullFilePath3]);
+            fullPath3=fullFilePath3;
         end
     end
 
     function encryptSendCallback(~, ~)
-        i=imread(fullFilePath1);
+        i=imread(fullPath1);
         u=rgb2gray(i);
         y=imbinarize(u,.9);
         s=[true,true;false,true];
@@ -102,8 +107,8 @@ function GUI2()
         figure;imshow(y)
         figure;imshow(s1)
         figure;imshow(s2)
-        c11=rgb2gray(fullFilePath2);
-        c12=rgb2gray(fullFilePath3);
+        c11=rgb2gray(imread(fullPath2));
+        c12=rgb2gray(imread(fullPath3));
         cnt = 0;
         s1_array = s1(:);
         idct_val_1 = c11;
@@ -199,8 +204,40 @@ function GUI2()
                 idct_val_2(m1-7:m1,n1-7:n1)=idct2(qb);
             end
         end
+        imwrite(idct_val_2,"C:\Users\thoma\OneDrive\Documents\dummy\myGray2.png")
+        imwrite(idct_val_1,"C:\Users\thoma\OneDrive\Documents\dummy\myGray3.png")
         figure;imshow(idct_val_2);
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+
+    function decryptImg1SelectCallback(~, ~)
+        [filename, pathname] = uigetfile('*.jpg', 'Select an image file');
+        if isequal(filename, 0) || isequal(pathname, 0)
+            disp('No file selected.');
+        else
+            fullFilePath4 = fullfile(pathname, filename);
+            set(decryptImg1DisplayBox, 'String', filename);
+            disp(['Selected file for Image 1: ', fullFilePath4]);
+            fullPath4=fullFilePath4;
+        end
+    end
+
+    function decryptImg2SelectCallback(~, ~)
+        [filename, pathname] = uigetfile('*.jpg', 'Select an image file');
+        if isequal(filename, 0) || isequal(pathname, 0)
+            disp('No file selected.');
+        else
+            fullFilePath5 = fullfile(pathname, filename);
+            set(decryptImg2DisplayBox, 'String', filename);
+            disp(['Selected file for Image 2: ', fullFilePath5]);
+            fullPath5=fullFilePath5;
+        end
+    end
+
+    function decryptSendCallback(~, ~)
+        s1_array = 7400;
+        s2_array = 7400;
+        idct_val_2=imread(fullPath4);
+        idct_val_1=imread(fullPath5);
         cnt=0;
         for m1=8:8:768
             for n1=8:8:1024
@@ -210,6 +247,9 @@ function GUI2()
                 q2 = dct_out(5:8,1:4);
                 q3 = dct_out(1:4,5:8);
                 q4 = dct_out(5:8,5:8);
+                qe = [q2;q3;q4];
+                mu = max(max(abs(qe)));
+                
                 p1 = q2(3,4)-mu;
                 p2 = q3(3,4)-mu;
                 p3 = q4(3,4)-mu;
@@ -241,35 +281,63 @@ function GUI2()
                 cnt = cnt + 3;
             end
         end
-        b_out1(end)=[];
+        b_out1(end)=7400;
         s1_out=reshape(b_out1,[74,100]);
         figure;imshow(s1_out);
-    end
-
-    function decryptImg1SelectCallback(~, ~)
-        [filename, pathname] = uigetfile('*.jpg', 'Select an image file');
-        if isequal(filename, 0) || isequal(pathname, 0)
-            disp('No file selected.');
-        else
-            fullFilePath2 = fullfile(pathname, filename);
-            set(decryptImg1DisplayBox, 'String', filename);
-            disp(['Selected file for Image 1: ', fullFilePath2]);
+        cnt = 0;
+        for m1=8:8:768
+            for n1=8:8:1024
+                b=idct_val_2(m1-7:m1,n1-7:n1);
+                dct_out=dct2(b);
+                q1 = dct_out(1:4,1:4);
+                q2 = dct_out(5:8,1:4);
+                q3 = dct_out(1:4,5:8);
+                q4 = dct_out(5:8,5:8);
+                p1 = q2(3,4)-mu;
+                p2 = q3(3,4)-mu;
+                p3 = q4(3,4)-mu;
+                mu = q4(4,4)-mu;
+                if(p1>mu)
+                    b_out2(cnt+1) = true;
+                else
+                    b_out2(cnt+1) = false;
+                end
+                if(p2>mu)
+                    b_out2(cnt+2) = true;
+                else
+                    b_out2(cnt+2) = false;
+                end
+                if(p3>mu)
+                    b_out2(cnt+3) = true;
+                else
+                    b_out2(cnt+3) = false;
+                end
+                if ((cnt+1)>=length(s2_array))
+                    break
+                end
+                if ((cnt+2)>=length(s2_array))
+                    break
+                end
+                if ((cnt+3)>=length(s2_array))
+                    break
+                end
+                cnt = cnt + 3;
+            end
         end
-    end
-
-    function decryptImg2SelectCallback(~, ~)
-        [filename, pathname] = uigetfile('*.jpg', 'Select an image file');
-        if isequal(filename, 0) || isequal(pathname, 0)
-            disp('No file selected.');
-        else
-            fullFilePath3 = fullfile(pathname, filename);
-            set(decryptImg2DisplayBox, 'String', filename);
-            disp(['Selected file for Image 2: ', fullFilePath3]);
+        b_out2(end)=7400;
+        s2_out=reshape(b_out1,[74,100]); 
+        corr2(s2,s2_out)
+        corr2(s1,s1_out)
+        z1=~s2_out;
+        for m=2:2:74
+            for n=2:2:100
+                ba=z1(m-1:m,n-1:n);
+                bb=xor(ba,s);
+                sc(m-1:m,n-1:n)=bb;
+            end
         end
-    end
-
-    function decryptSendCallback(~, ~)
-        disp('Decrypt button clicked');
+        
+        imtool(sc)
     end
 
     % Show the main window
